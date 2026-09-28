@@ -10,6 +10,7 @@ from rest_framework.authentication import BasicAuthentication,TokenAuthenticatio
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum
 from django.utils import timezone
+from expense.permission import IsOwner
 # Create your views here.
 class UserViewSet(ViewSet):
     def create(self,request):
@@ -21,7 +22,7 @@ class UserViewSet(ViewSet):
 
 class ExpenseViewSet(ViewSet):
     authentication_classes=[TokenAuthentication]
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsOwner]
     def create(self,request):
         dser=ExpenseSerializer(data=request.data)
         if dser.is_valid():
@@ -58,20 +59,22 @@ class ExpenseViewSet(ViewSet):
 
 class ExpenseSummaryView(APIView):
     authentication_classes=[TokenAuthentication]
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsOwner]
     
     def get(self,request):
-        cur_date=timezone.now()
+        cur_date=timezone.now()#date and time object
         cur_month=cur_date.month
         cur_year=cur_date.year
         # print(cur_month,cur_date)
-        data=Expenses.objects.filter(owner=request.user,created_at__month=cur_month,created_at__year=cur_year)
+        data=Expenses.objects.filter(owner=request.user,created_at__month=cur_month,created_at__year=cur_year)# filtering the owner,date,year
         category_summary=data.values('category').annotate(Sum('amount'))
+        # pytyon native formatting
         cat_summary=[summary for summary in category_summary]
         for i in category_summary:
             print(i)
         total_expense=data.values('amount').aggregate(Sum('amount'))
         print(total_expense)
+        # json formatting
         context={
             "total_expense":total_expense,
             "category_summary":cat_summary

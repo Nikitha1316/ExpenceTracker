@@ -10,7 +10,17 @@ class UserSerializer(serializers.Serializer):
     password=serializers.CharField()
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    owner=serializers.StringRelatedField(read_only=True) # to get the owner as the username 
+
+    # serializer method feild
+    # greeting=serializers.serializerMethodFeild()
+    owner=serializers.SerializerMethodField()
     class Meta:
         model=Expenses
         fields='__all__'
-        read_only_fields=['id','created_at','owner']
+        read_only_fields=['id','created_at']
+
+    def get_greeting(self,obj):
+        return "Hi welcome to expense tracker"
+    def get_owner(self,obj):
+        return obj.owner.username
